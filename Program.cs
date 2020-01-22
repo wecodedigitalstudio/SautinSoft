@@ -14,7 +14,7 @@ namespace PdfToCsv
     {
         #region costante globale percorso cartella
         public const string pdfdirpath = @"C:\Users\Giorgio Della Roscia\Desktop\ML\Progetti\SautinSoft\PdfToCsv\PDF"; //percorso dove si trovano gli allegati in formato pdf
-        public const string txtdirpath = @"C:\Users\Giorgio Della Roscia\Desktop\ML\Progetti\SautinSoft\PdfToCsv\TXT";
+        public const string txtdirpath = @"C:\Users\Giorgio Della Roscia\Desktop\ML\Progetti\SautinSoft\PdfToCsv\TXT"; //percorso dove andrò a creare i file di testo
         #endregion
         static void Main(string[] args)
         {
@@ -30,16 +30,15 @@ namespace PdfToCsv
                     f.OpenPdf($"{pdfdir}.pdf"); //apro i "vecchi" pdf
                     f.ToExcel($"{xlsdir}.xls"); //trasformo i nuovi file senza estensione in xls
                     string pathxls = $"{xlsdir}.xls"; //variabile d'appoggio per avere il path compatto in una sola variabile  
-                    string filename = xlsdir.Replace(@"C:\Users\Giorgio Della Roscia\Desktop\ML\Progetti\SautinSoft\PdfToCsv\XLS\", "");
                     #endregion
 
-                    #region leggo il contenuto della cella dovi si trovano i dati del produttore
+                    #region leggo il contenuto della cella dove si trovano i dati del produttore
                     HSSFWorkbook hssfworkbook;
                     using (FileStream excelfile = new FileStream(pathxls, FileMode.Open, FileAccess.Read))
                     {
                         hssfworkbook = new HSSFWorkbook(excelfile);
                     }
-                    ISheet sheet = hssfworkbook.GetSheetAt(0);
+                    ISheet sheet = hssfworkbook.GetSheetAt(0); //ULTERIORE LOOP CHE CONTROLLI TUTTI GLI SHEET DI UN WORKBOOK (COSI PRENDE SOLO IL PRIMO)
                     string producerdata = sheet.GetRow(6).GetCell(0).ToString(); //dati del produttore (nome, ID, tipo latte)
                     #endregion 
 
@@ -51,20 +50,32 @@ namespace PdfToCsv
                     producername = producername.Replace("\n", " "); //alcuni nomi anzichè lo spazio avevano il carattere \n
                     #endregion
 
-                    #region creo file .txt rinominato ID e nome del produttore poi dovro inseerire i dati
+                    #region creo file .txt rinominato ID e nome del produttore ed aggiungo la prima riga uguale per tutti
                     string txtpath = txtdirpath + @"\" + producerID + "-" + producername + ".txt"; //path del nuovo file di testo
-                    using (StreamWriter sw = new StreamWriter(txtpath, true)) //true per non eliminare e ricreare
+                    string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
+                    using (StreamWriter sw1 = new StreamWriter(txtpath, true)) //true per non eliminare e ricreare
                     {
-                        sw.WriteLine("Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n");
-                        sw.WriteLine("data"); //dove data rappresenta l'estratto dell'xls controllato e posto nell'ordine corretto e compreso nei giusti paramentri
-                        //data deve contenere i parametri necessari ed andare a capo ogni fine riga (controllo colonna==null (anche colonna+1==null))
-                        sw.Close();
+                        string[] lines = File.ReadAllLines(txtpath);
+                        foreach (string line in lines)
+                        {
+                            StreamReader sr1 = new StreamReader(txtpath);
+                            bool comparisonresult = line.Equals(parameters);
+                        }
+                        sw1.WriteLine("Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n");
+                        
+                        //while (sr1.EndOfStream != true) { ; } //fino a quando non arrivo alla fine del file
+                        sw1.Close();
                     }
                     #endregion
 
-                    //esempio riga: n; n; n; n; n; n //con i ; anzichè , perchè sono tipo double
-                    //se alcune colonne mancano sostituire con '/'
-                    //ogni volta eseguire il controllo se sono presenti o meno e in quale posizione (colonna)
+                    #region prova
+                    StreamWriter sw2 = new StreamWriter(txtpath, true);
+                    sw2.WriteLine("data"); //DOVE DATA RAPPRESENTA L'ESTRATTO DELL'XLS CONTROLLATO E POSTO NELL'ORDINE CORRETTO E COMPRESO NEI GIUSTI PARAMENTRI
+                    //DATA DEVE CONTENERE I PARAMETRI NECESSARI ED ANDARE A CAPO OGNI FINE RIGA (CONTROLLO COLONNA==NULL (ANCHE COLONNA+1==NULL))
+                    #endregion
+
+                    //SE ALCUNE COLONNE SONO VUOTE SOSTITUIRE CON '/'
+                    //OGNI VOLTA ESEGUIRE IL CONTROLLO SE SONO PRESENTI O MENO E IN QUALE POSIZIONE(COLONNA)
                 }
                 Console.WriteLine("processo terminato");
                 Console.ReadLine();
