@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Log On</title>
+    <link href="/Weblims/Content/themes/ui-lightness/jquery-ui-1.10.1.custom.css" rel="stylesheet" type="text/css" />
+    <link href="/Weblims/Content/themes/metro-orange/easyui.css" rel="stylesheet" type="text/css" />
+    <link href="/Weblims/Content/themes/icon.css" rel="stylesheet" type="text/css" />
+    <link href="/Weblims/Content/Site.css" rel="stylesheet" type="text/css" />
+    <script src="/Weblims/Scripts/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/jquery-ui-1.10.1.custom.min.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/jquery.ui.datepicker-it.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/jquery.easyui.min.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/easyui-lang-it.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/function/common.js" type="text/javascript"></script>
+    <script src="/Weblims/Scripts/Site.Master.js" type="text/javascript"></script>
+
+    
+
+    <script type="text/javascript">
+        function Content(action, controller) {
+            var url = '/Weblims/controller/action/';
+            url = url.replace("action", action);
+            url = url.replace("controller", controller);
+            return url;
+        }
+    </script>
+
+</head>
+<body class="easyui-layout"> 
+    <div data-options="region:'north'" style="height:75px">
+        <table style="border-collapse: collapse; width: 100%;">
+            <tr>
+                <td style="vertical-align: middle; width:100px;">
+                    <img src="/Weblims/Content/immagini/logoassam.gif" 
+                        style="float:left; vertical-align:middle; margin-right: 10px;"/>
+                </td>
+                <td style="vertical-align: middle;"><h1>WEB LIMS 2.0</h1></td>
+                <td style="text-align: right;">
+                        Welcome <strong>Falcioni Anna</strong>!
+    [ <a href="/Weblims/Account/LogOff">Log Off</a> ]
+
+                </td>
+            </tr>
+        </table>
+        
+    </div>  
+    <div data-options="region:'south'" style="height:40px;">
+            <table style="border-collapse: collapse; width: 100%;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    v.  - rev.  - db v. 
+                </td>
+                <td style="vertical-align: middle;"></td>
+                <td style="text-align: right;">
+                    <a href="http://www.assam.marche.it" title="by ASSAM" target="_blank">ASSAM</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div data-options="region:'east',split:true, collapsed:true" id="right" title="-" style="width:180px;">  
+        
+    </div>
+    <div data-options="region:'west',split:true" title="FUNZIONALITA'" style="width:250px;">
+    
+
+      <div class="easyui-accordion" data-options="fit:true,border:false">
+        
+        <div title="Home" style="padding:10px;"><ul class="easyui-tree"><li><a href="/Weblims/">Pagina Iniziale</a></li></ul></div><div title="Accettazioni" style="padding:10px;"><ul class="easyui-tree"><li><span>Utilità </span><ul><li><a href="/Weblims/Accettazioni/Visualizza">Visualizza Accettazione</a></li></ul></li></ul></div><div title="Latte Qualità" style="padding:10px;"><ul class="easyui-tree"><li><span>Principale </span><ul><li><a href="/Weblims/Accettazioni/LatteQualita">Accettazioni</a></li></ul></li><li><span>Generiche </span><ul><li><a href="/Weblims/LatteQualita/AnalisiConMedie">Analisi Con Medie</a></li><li><a href="/Weblims/LatteQualita/AndamentoParametri">Andamento Parametri</a></li></ul></li><li><span>Personalizzazioni </span><ul><li><a href="/Weblims/LatteQualita/Sabelli">Sabelli</a></li></ul></li><li><span>Utilità </span><ul><li><a href="/Weblims/LatteQualita/Agrinet">Agrinet</a></li><li><a href="/Weblims/LatteQualita/Cisterne">Cisterne</a></li><li><a href="/Weblims/LatteQualita/PerTecnici">Per tecnici</a></li></ul></li></ul></div><div title="Statistiche" style="padding:10px;"><ul class="easyui-tree"><li><a href="/Weblims/Statistiche">Consultazione Statistiche</a></li></ul></div>
+
+        
+        </div>  
+    </div> 
+    <div data-options="region:'center',title:'Log On',iconCls:'icon-ok'" id="center" style="padding:0px;">  
+        
+<script src="/Weblims/Scripts/jquery.validate.min.js" type="text/javascript"></script>
+<script src="/Weblims/Scripts/jquery.validate.unobtrusive.min.js" type="text/javascript"></script>
+<p style="text-align:center;">
+    Per favore inserisci il tuo Username e la Password. 
+    
+</p>
+<form action="/Weblims/Account/LogOn?ReturnUrl=%2fWeblims%2fLatteQualita%2fAnalisiConMedieReport%2f%3fCodTipoLatte%3d601%26CodCliente%3dC350%26CodProduttore%3dA5333601%26DataDa%3d01%252F01%252F2014%26DataA%3d26%252F05%252F2014%26SoloValide%3dfalse" method="post">    <div class="small shadow">
+        <fieldset>
+            <legend>Account Information</legend>
+
+            <div class="editor-label">
+                <label for="UserName">Username</label>
+            </div>
+            <div class="editor-field">
+                <input data-val="true" data-val-required="The Username field is required." id="UserName" name="UserName" type="text" value="" />
+                <span class="field-validation-valid" data-valmsg-for="UserName" data-valmsg-replace="true"></span>
+            </div>
+
+            <div class="editor-label">
+                <label for="Password">Password</label>
+            </div>
+            <div class="editor-field">
+                <input data-val="true" data-val-required="The Password field is required." id="Password" name="Password" type="password" />
+                <span class="field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
+            </div>
+
+            <div class="editor-label">
+                <input data-val="true" data-val-required="The Ricordami su questo computer field is required." id="RememberMe" name="RememberMe" type="checkbox" value="true" /><input name="RememberMe" type="hidden" value="false" />
+                <label for="RememberMe">Ricordami su questo computer</label>
+            </div>
+
+            <p style="text-align: center;">
+                <input type="submit" value=" ACCEDI " class="renderbutton" />
+            </p>
+        </fieldset>
+    </div>
+</form>
+    </div>  
+    
+</body>
+</html>
