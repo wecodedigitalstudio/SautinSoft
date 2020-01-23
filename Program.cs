@@ -25,8 +25,8 @@ namespace PdfToCsv
             {
                 try
                 {
-                    string splittedpdffilepath = SplitPdfFileInSinglePage(file);
-                    string fullxlspath = CreateXlsFile(file);
+                    List<string> listPdfSplitted = SplitPdfFileInSinglePage(file);
+                    //string fullxlspath = CreateXlsFile(file);
                     //string txtfilename = ExtrapolateFileName(fullxlspath);
                     //string a = CreateTxtFile(txtfilename);
                     Console.ReadLine();
@@ -49,20 +49,21 @@ namespace PdfToCsv
             return di.GetFiles().ToList();
         }
 
-        private static string SplitPdfFileInSinglePage(FileInfo file)
+        private static List<string> SplitPdfFileInSinglePage(FileInfo file)
         {
-            string outputpath = $@"{projectdirpath}SplittedPDF";
+            List<string> fileList = new List<string>();
 
-            string newName = file.Name.Replace(".pdf","");
+            string newFullName = "";
 
             using (PdfReader pdfreader = new PdfReader(file.FullName))
             {
                 for (int pageNumber = 0; pageNumber < pdfreader.NumberOfPages; pageNumber++)
                 {
-                    newName = string.Format($"{newName}_page{pageNumber}");
+                    string newName = file.Name.Replace(".pdf", "");
+                    newFullName = string.Format($@"{projectdirpath}SplittedPDF\{newName}_page{pageNumber}.pdf");
 
                     Document document = new Document();
-                    PdfCopy copy = new PdfCopy(document, new FileStream($@"{outputpath}\{newName}.pdf", FileMode.Create));
+                    PdfCopy copy = new PdfCopy(document, new FileStream($"{newFullName}", FileMode.Create));
                     document.Open();
 
                     if (pageNumber < pdfreader.NumberOfPages)
@@ -74,22 +75,25 @@ namespace PdfToCsv
                         break;
                     }
                     document.Close();
+                    fileList.Add(newFullName);
                 }
             }
-            return newName;
+            return fileList;
         }
 
 
-        //    private static string CreateXlsFile(FileInfo file)
-        //    {
-        //        SautinSoft.PdfFocus f = new SautinSoft.PdfFocus();
-        //        string pdfdir = file.FullName.Replace(".pdf", "");
-        //        string xlsdir = pdfdir.Replace(@"\PDF\", @"\XLS\"); //li copio in xlsdir
-        //        f.OpenPdf($"{pdfdir}.pdf"); //apro i "vecchi" pdf
-        //        f.ToExcel($"{xlsdir}.xls"); //trasformo i nuovi file senza estensione in xls
-        //        string compactpathxls = $"{xlsdir}.xls";
-        //        return compactpathxls;
-        //    }
+        private static string CreateXlsFile(FileInfo file)
+        {
+            SautinSoft.PdfFocus f = new SautinSoft.PdfFocus();
+            string pdfdir = file.FullName.Replace(".pdf", "");
+            string xlsdir = pdfdir.Replace(@"\PDF\", @"\XLS\"); //li copio in xlsdir
+            f.OpenPdf($"{pdfdir}.pdf"); //apro i "vecchi" pdf
+            f.ToExcel($"{xlsdir}.xls"); //trasformo i nuovi file senza estensione in xls
+            string compactpathxls = $"{xlsdir}.xls";
+            return compactpathxls;
+        }
+
+
         //    private static string ExtrapolateFileName(string fullxlspath)
         //    {
         //        HSSFWorkbook hssfworkbook;
@@ -134,5 +138,5 @@ namespace PdfToCsv
         //        }
         //        return ;
         //    }
-        }
+    }
     }
