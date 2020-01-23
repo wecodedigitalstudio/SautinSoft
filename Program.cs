@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 #endregion
 
 namespace PdfToCsv
@@ -27,8 +28,12 @@ namespace PdfToCsv
                 {
                     List<string> listPdfSplitted = SplitPdfFileInSinglePage(file);
                     List<string> xlsList= CreateXlsFile(listPdfSplitted);
-                    //string txtfilename = ExtrapolateFileName(fullxlspath);
-                    //string a = CreateTxtFile(txtfilename);
+                    foreach (string xlsFullPathName in xlsList)
+                    {
+                        string txtfilename = ExtrapolateFileName(xlsFullPathName);
+                        string a = CreateTxtFile(txtfilename);
+                    }
+
                 }
                 catch (ArgumentException ae)
                 {
@@ -103,49 +108,53 @@ namespace PdfToCsv
         }
 
 
-        //    private static string ExtrapolateFileName(string fullxlspath)
-        //    {
-        //        HSSFWorkbook hssfworkbook;
-        //        using (FileStream excelfile = new FileStream(fullxlspath, FileMode.Open, FileAccess.Read))
-        //        {
-        //            hssfworkbook = new HSSFWorkbook(excelfile);
-        //        }
-        //        ISheet sheet = hssfworkbook.GetSheetAt(0);
-        //        string producerdata = sheet.GetRow(6).GetCell(0).ToString();
-        //        int startindex = producerdata.IndexOf(':') + 2;
-        //        int endindex = producerdata.IndexOf('a') - 2; //non metto \n altrimenti prende quello dopo "Produttore:" e neanche 'L' perchè può esserci nel nome
-        //        string producerIDname = producerdata.Substring(startindex, endindex - startindex);
-        //        producerIDname.Replace("\n", " "); //alcuni nomi anzichè lo spazio avevano il carattere \n
-        //        return producerIDname;
-        //    }
-        //    private static string CreateTxtFile(string txtfilename)
-        //    {
-        //        string txtfilepath = $@"{projectdirpath}\TXT\{txtfilename}.txt";
-        //        string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
-        //        using (StreamWriter sw1 = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
-        //        {
-        //            HSSFWorkbook hssfworkbook = new HSSFWorkbook();
-        //            ISheet sheet = hssfworkbook.GetSheetAt(0);
-        //            string[] lines = File.ReadAllLines(txtfilepath);
-        //            foreach (string line in lines)
-        //            {
-        //                StreamReader sr1 = new StreamReader(txtfilepath);
-        //                bool comparisonresult = line.Equals(parameters);
-        //                if (sheet.GetRow(6).GetCell(0) != null)
-        //                {
-        //                    if (line.Count != 0)
-        //                    {
-        //                        sw1.WriteLine(data);
-        //                    }
-        //                    else
-        //                    {
-        //                        sw1.WriteLine(parameters);
-        //                    }
-        //                }
-        //            }
-        //            sw1.Close();
-        //        }
-        //        return ;
-        //    }
+        private static string ExtrapolateFileName(string fullxlspath)
+        {
+            HSSFWorkbook hssfworkbook;
+            using (FileStream excelfile = new FileStream(fullxlspath, FileMode.Open, FileAccess.Read))
+            {
+                hssfworkbook = new HSSFWorkbook(excelfile);
+            }
+            ISheet sheet = hssfworkbook.GetSheetAt(0);
+            string producerdata = sheet.GetRow(6).GetCell(0).ToString();
+            string producerIDname = "";
+            if (producerdata != "")
+            {
+                RegexOptions options = RegexOptions.None;
+                Regex regex = new Regex("[ ]{2,}", options);
+
+                int startindex = producerdata.IndexOf(':') > 0 ? producerdata.IndexOf(':') + 2 : 0;
+                int endindex = producerdata.IndexOf('a') > 2 ? producerdata.IndexOf('a') - 2 : 0; //non metto \n altrimenti prende quello dopo "Produttore:" e neanche 'L' perchè può esserci nel nome
+                producerIDname = producerdata.Substring(startindex, endindex - startindex);
+                producerIDname = regex.Replace(producerIDname.Replace("\n", " "), " ");
+            }
+            return producerIDname;
+        }
+
+        private static string CreateTxtFile(string txtfilename)
+        {
+            string txtfilepath = $@"{projectdirpath}\TXT\{txtfilename}.txt";
+            string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
+            using (StreamWriter sw1 = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
+            {
+                HSSFWorkbook hssfworkbook = new HSSFWorkbook();
+                ISheet sheet = hssfworkbook.GetSheetAt(0);
+
+                string headerLine = File.ReadAllLines(txtfilepath)[0];
+
+                StreamReader sr1 = new StreamReader(txtfilepath);
+                string producer = sheet.GetRow(6).GetCell(0).ToString();
+
+                if(headerLine != parameters)
+                {
+                    sw1.WriteLine(parameters);
+                }
+
+                //sw1.WriteLine(data);
+
+                sw1.Close();
+            }
+            return "";
+        }
     }
-    }
+}
