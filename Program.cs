@@ -26,10 +26,9 @@ namespace PdfToCsv
                 try
                 {
                     List<string> listPdfSplitted = SplitPdfFileInSinglePage(file);
-                    //string fullxlspath = CreateXlsFile(file);
+                    List<string> xlsList= CreateXlsFile(listPdfSplitted);
                     //string txtfilename = ExtrapolateFileName(fullxlspath);
                     //string a = CreateTxtFile(txtfilename);
-                    Console.ReadLine();
                 }
                 catch (ArgumentException ae)
                 {
@@ -60,10 +59,10 @@ namespace PdfToCsv
                 for (int pageNumber = 0; pageNumber < pdfreader.NumberOfPages; pageNumber++)
                 {
                     string newName = file.Name.Replace(".pdf", "");
-                    newFullName = string.Format($@"{projectdirpath}SplittedPDF\{newName}_page{pageNumber}.pdf");
+                    newFullName = string.Format($@"{projectdirpath}SplittedPDF\{newName}_page{pageNumber}");
 
                     Document document = new Document();
-                    PdfCopy copy = new PdfCopy(document, new FileStream($"{newFullName}", FileMode.Create));
+                    PdfCopy copy = new PdfCopy(document, new FileStream($"{newFullName}.pdf", FileMode.Create));
                     document.Open();
 
                     if (pageNumber < pdfreader.NumberOfPages)
@@ -82,15 +81,25 @@ namespace PdfToCsv
         }
 
 
-        private static string CreateXlsFile(FileInfo file)
+        private static List<string> CreateXlsFile(List<string> listPdfFiles)
         {
-            SautinSoft.PdfFocus f = new SautinSoft.PdfFocus();
-            string pdfdir = file.FullName.Replace(".pdf", "");
-            string xlsdir = pdfdir.Replace(@"\PDF\", @"\XLS\"); //li copio in xlsdir
-            f.OpenPdf($"{pdfdir}.pdf"); //apro i "vecchi" pdf
-            f.ToExcel($"{xlsdir}.xls"); //trasformo i nuovi file senza estensione in xls
-            string compactpathxls = $"{xlsdir}.xls";
-            return compactpathxls;
+            List<string> fileList = new List<string>();
+            listPdfFiles.ForEach(pdfFileName =>
+            {
+                SautinSoft.PdfFocus f = new SautinSoft.PdfFocus();
+                string xlsFullName = pdfFileName.Replace(@"\SplittedPDF\", @"\XLS\"); //li copio in xlsdir
+                try
+                {
+                    f.OpenPdf($"{pdfFileName}.pdf"); //apro i "vecchi" pdf
+                    f.ToExcel($"{xlsFullName}.xls"); //trasformo i nuovi file senza estensione in xls
+                    string compactpathxls = $"{xlsFullName}.xls";
+                    fileList.Add(compactpathxls);
+                } catch
+                {
+                    Console.WriteLine($"Non è stato possibile leggere il file {pdfFileName}.");
+                }
+            });
+            return fileList;
         }
 
 
