@@ -212,10 +212,29 @@ namespace PdfToCsv
 
         private static List<string> GetFileData(ISheet sheet)
         {
-            List<string> datalist = new List<string>();
-            //TODO: proseguire con la raccolta dei dati
-            //Dictionary<string, int> dictionary = new Dictionary<string, int>(); 
-            //dictionary.Add(cell content, column number);
+            //List<string> datalist = new List<string>();
+            Dictionary<string, int> columnDictionary = new Dictionary<string, int>();
+            List<Dictionary<string, string>> data = new List<Dictionary<string, string>>();
+
+            var haederRow = sheet.GetRow(6);
+            foreach (var column in haederRow)
+            {
+                Console.WriteLine(column.StringCellValue);
+                columnDictionary.Add(column.StringCellValue, column.ColumnIndex);
+
+            }
+
+
+            //TODO:Trovare un modo per ciclare le righe
+
+            //TODO:Ad ogni ciclo riga all'interno c'è un ciclo sulle colonne oppure grazie al dictionary:
+
+            string cellcontent1 = sheet.GetRow(0).GetCell(columnDictionary["Grassi"]).ToString().Replace("\n", " ").Trim();
+            string cellcontent2 = sheet.GetRow(0).GetCell(columnDictionary["pH"]).ToString().Replace("\n", " ").Trim();
+
+            //TODO
+
+            ////dictionary.Add(cell content, column number);
             //dictionary.Add("Grasso", 6);
             //dictionary.Add("Grasso (per calcolo)", 7);
             //dictionary.Add("Proteine", 8);
@@ -229,10 +248,10 @@ namespace PdfToCsv
             //dictionary.Add("Carica batterica totale", 16);
             //if ("Grasso (per calcolo)" == sheet.GetRow(6).GetCell(6).ToString())
 
-            //for (int columnindex = 0; columnindex < 18; columnindex ++)
-            //{
-            //    string cellcontent = sheet.GetRow(6).GetCell(columnindex).ToString().Replace("\n", " ").Trim();
-            //}
+            //    for (int columnindex = 0; columnindex < 18; columnindex++)
+            //    {
+            //        string cellcontent = sheet.GetRow(6).GetCell(columnindex).ToString().Replace("\n", " ").Trim();
+            //    }
             return datalist;
         }
     }
