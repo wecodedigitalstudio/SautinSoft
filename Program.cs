@@ -182,7 +182,6 @@ namespace PdfToCsv
                             hssfworkbook = new HSSFWorkbook(xlsfile);
                         }
                         ISheet sheet = hssfworkbook.GetSheetAt(0);
-                        //StreamReader reader = new StreamReader(txtfilepath);
                         string producer = sheet.GetRow(6).GetCell(0).ToString();
                         if (IsTextFileEmpty(txtfilepath))
                         {
@@ -214,7 +213,8 @@ namespace PdfToCsv
         private static List<string> GetFileData(ISheet sheet)
         {
             List<string> datalist = new List<string>();
-            Dictionary<string, int> dictionary = new Dictionary<string, int>(); 
+            //TODO: proseguire con la raccolta dei dati
+            //Dictionary<string, int> dictionary = new Dictionary<string, int>(); 
             //dictionary.Add(cell content, column number);
             //dictionary.Add("Grasso", 6);
             //dictionary.Add("Grasso (per calcolo)", 7);
@@ -228,8 +228,6 @@ namespace PdfToCsv
             //dictionary.Add("Cellule somatiche", 15);
             //dictionary.Add("Carica batterica totale", 16);
             //if ("Grasso (per calcolo)" == sheet.GetRow(6).GetCell(6).ToString())
-
-
 
             //for (int columnindex = 0; columnindex < 18; columnindex ++)
             //{
