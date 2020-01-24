@@ -22,18 +22,17 @@ namespace PdfToCsv
                 try
                 {
                     List<string> listpdfsplitted = SplitPdfFileInSinglePage(pdffile);
-                    CreateTxtFilesWithoutHavingXls(listpdfsplitted); //usare se devo creare xlsfile
+                    //CreateTxtFilesWithoutHavingXls(listpdfsplitted); //usare se devo creare xlsfile
                     CreateTxtFilesHavingXls(); //usare se ho già creato i miei xls file
                 }
-
                 catch (ArgumentException)
                 {
-                    Console.WriteLine($"AE - Errore nella trasformazione del file: {pdffile.Name}.");
+                    Console.WriteLine($"AE - File: {pdffile.Name}.");
                     //File.Delete(pdffile.FullName);
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine($"E - Errore nella trasformazione del file: {pdffile.Name}.");
+                    Console.WriteLine($"E - File: {pdffile.Name}.");
                     //File.Delete(pdffile.FullName);
                 }
             }
@@ -115,11 +114,11 @@ namespace PdfToCsv
             });
             return fileList;
         }
-
-        private static void CreateTxtFilesHavingXls()
+        
+        private static void CreateTxtFilesWithoutHavingXls(List<string> listpdfsplitted)
         {
-            List<string> xlsfilelist = GetXlsFilePathList();
-            foreach (string xlsfile in xlsfilelist)
+            List<string> xlsfiles = CreateXlsFile(listpdfsplitted);
+            foreach (string xlsfile in xlsfiles)
             {
                 string txtfilename = ExtrapolateFileName(xlsfile);
                 if (txtfilename != null && txtfilename.Contains('-'))
@@ -129,10 +128,10 @@ namespace PdfToCsv
             }
         }
 
-        private static void CreateTxtFilesWithoutHavingXls(List<string> listpdfsplitted)
+        private static void CreateTxtFilesHavingXls()
         {
-            List<string> xlsfiles = CreateXlsFile(listpdfsplitted);
-            foreach (string xlsfile in xlsfiles)
+            List<string> xlsfilelist = GetXlsFilePathList();
+            foreach (string xlsfile in xlsfilelist)
             {
                 string txtfilename = ExtrapolateFileName(xlsfile);
                 if (txtfilename != null && txtfilename.Contains('-'))
@@ -160,6 +159,7 @@ namespace PdfToCsv
                 int endindex = producerdata.IndexOf('a')-2; //non metto \n altrimenti prende quello dopo "Produttore:" e neanche 'L' perchè può esserci nel nome
                 producerIDname = producerdata.Substring(startindex, endindex - startindex);
                 producerIDname = regex.Replace(producerIDname.Replace("\n", " "), " ");
+                producerIDname = producerIDname.Replace(".", "");
             }
             return producerIDname;
         }
@@ -182,47 +182,60 @@ namespace PdfToCsv
                             hssfworkbook = new HSSFWorkbook(xlsfile);
                         }
                         ISheet sheet = hssfworkbook.GetSheetAt(0);
-
                         //StreamReader reader = new StreamReader(txtfilepath);
                         string producer = sheet.GetRow(6).GetCell(0).ToString();
                         if (IsTextFileEmpty(txtfilepath))
                         {
                             writer.WriteLine(parameters);
-                            Console.WriteLine(GetFileData(sheet));
                         }
-                        else
-                        {
-                            Console.WriteLine(GetFileData(sheet));
-                        }
+                        Console.WriteLine(GetFileData(sheet));
                         writer.Close();
                     }
                     catch
                     {
-                        Console.WriteLine($"Errore relativo al creare il file di testo ed aggiungere i dati. Nome del file: {xlsfilepath}."); //TODO: attualmente stampa l'intero path, solo il nome
+                        string xlsfilename = xlsfilepath.Replace($@"{projectdirpath}XLS\", "");
+                        Console.WriteLine($"Errore relativo al creare il file di testo ed aggiungere i dati. Nome del file: {xlsfilename}."); 
                     }
                 }
             }
         }
 
-        public static bool IsTextFileEmpty(string fileName) //TODO: capire il funzionamento
+        public static bool IsTextFileEmpty(string filename)
         {
-            var info = new FileInfo($"{fileName}");
-            if (info.Length == 0)
+            FileInfo fileinfo = new FileInfo($"{filename}");
+            if (fileinfo.Length < 6 ) //il .Length restituisce il peso del file in bytes
             {
-                return true;
-            }
-            if (info.Length < 6)
-            {
-                var content = File.ReadAllText(fileName);
-                return content.Length == 0;
+                var contentoffile = File.ReadAllText(filename);
+                return contentoffile.Length == 0;
             }
             return false;
         }
 
-        private static string GetFileData(ISheet sheet)
+        private static List<string> GetFileData(ISheet sheet)
         {
-            //TODO: prendere i dati dal file excel, ho passato il foglio come parametro
-            return "";
+            List<string> datalist = new List<string>();
+            Dictionary<string, int> dictionary = new Dictionary<string, int>(); 
+            //dictionary.Add(cell content, column number);
+            //dictionary.Add("Grasso", 6);
+            //dictionary.Add("Grasso (per calcolo)", 7);
+            //dictionary.Add("Proteine", 8);
+            //dictionary.Add("Proteine (per calcolo)", 9);
+            //dictionary.Add("Lattosio", 10);
+            //dictionary.Add("Residuo secco magro", 11);
+            //dictionary.Add("pH", 12);
+            //dictionary.Add("Indice Crioscopico", 13);
+            //dictionary.Add("Contenuto in acqua aggiunta", 14);
+            //dictionary.Add("Cellule somatiche", 15);
+            //dictionary.Add("Carica batterica totale", 16);
+            //if ("Grasso (per calcolo)" == sheet.GetRow(6).GetCell(6).ToString())
+
+
+
+            //for (int columnindex = 0; columnindex < 18; columnindex ++)
+            //{
+            //    string cellcontent = sheet.GetRow(6).GetCell(columnindex).ToString().Replace("\n", " ").Trim();
+            //}
+            return datalist;
         }
     }
 }
