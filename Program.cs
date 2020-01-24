@@ -224,7 +224,7 @@ namespace PdfToCsv
 
             }
 
-
+            
             //TODO:Trovare un modo per ciclare le righe
 
             //TODO:Ad ogni ciclo riga all'interno c'è un ciclo sulle colonne oppure grazie al dictionary:
