@@ -1,6 +1,5 @@
-﻿//TODO: interpretazione file-->report-->
+﻿//TODO: interpretazione file-->report-->variabile di diverse tipologie
 
-#region librerie
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using NPOI.HSSF.UserModel;
@@ -10,79 +9,95 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-#endregion
 
 namespace PdfToCsv
 {
     class Program
     {
-        #region costante globale percorso cartella
         public const string projectdirpath = @"C:\Users\Giorgio Della Roscia\Desktop\ML\Progetti\SautinSoft\PdfToCsv\";
-        #endregion
         static void Main(string[] args)
         {
-            List<FileInfo> files = GetFilePathList(); 
-            foreach (var file in files)
+            List<FileInfo> pdffiles = GetPdfFilePathList("PDF");
+            List<string> xlsfiles = GetXlsFilePathList();
+            foreach (var pdffile in pdffiles)
             {
                 try
                 {
-                    List<string> listPdfSplitted = SplitPdfFileInSinglePage(file);
-                    List<string> xlsList= CreateXlsFile(listPdfSplitted);
+                    List<string> listPdfSplitted = SplitPdfFileInSinglePage(pdffile);
+                    List<string> xlsList = CreateXlsFile(listPdfSplitted); 
                     foreach (string xlsFullPathName in xlsList)
                     {
                         string txtfilename = ExtrapolateFileName(xlsFullPathName);
-                        string a = CreateTxtFile(txtfilename);
+                        if (txtfilename != null)
+                        {
+                            CreateTxtFile(txtfilename); 
+                        }
                     }
-
                 }
-                catch (ArgumentException ae)
+                catch (ArgumentException)
                 {
-                    Console.WriteLine($"Argument Exception - The process failed: {ae.ToString()}.");
+                    Console.WriteLine($"AE - Errore nella trasformazione del file: {pdffile.Name}.");
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Exception - The process failed: {e.ToString()}.");
+                    Console.WriteLine($"E - Errore nella trasformazione del file: {pdffile.Name}.");
                 }
             }
             Console.ReadLine();
         }
 
-        private static List<FileInfo> GetFilePathList()
+        private static List<FileInfo> GetPdfFilePathList(string folder)
         {
-            DirectoryInfo di = new DirectoryInfo($@"{projectdirpath}\PDF");
+            DirectoryInfo di = new DirectoryInfo($@"{projectdirpath}\{folder}");
             return di.GetFiles().ToList();
+        }
+
+        private static List<string> GetXlsFilePathList()
+        {
+            List<string> xlsfilelist = new List<string>();
+            List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
+            foreach (var xlsfile in xlsfiles) //lascio il ciclo per visualizzare un eventuale errore a schermo
+            {
+                try
+                {
+                    xlsfilelist.Add($"{xlsfile}");
+                }
+                catch
+                {
+                    Console.WriteLine($"Errore nel restituire il percorso del file xls: {xlsfile.Name}.");
+                }
+            }
+            return xlsfilelist;
         }
 
         private static List<string> SplitPdfFileInSinglePage(FileInfo file)
         {
-            List<string> fileList = new List<string>();
-
-            string newFullName = "";
-
+            List<string> filelist = new List<string>();
+            string newfullname = "";
             using (PdfReader pdfreader = new PdfReader(file.FullName))
             {
-                for (int pageNumber = 0; pageNumber < pdfreader.NumberOfPages; pageNumber++)
+                for (int pagenumber = 0; pagenumber < pdfreader.NumberOfPages; pagenumber++)
                 {
-                    string newName = file.Name.Replace(".pdf", "");
-                    newFullName = string.Format($@"{projectdirpath}SplittedPDF\{newName}_page{pageNumber}");
+                    string newname = file.Name.Replace(".pdf", "");
+                    newfullname = string.Format($@"{projectdirpath}SplittedPDF\{newname}_page{pagenumber}");
 
                     Document document = new Document();
-                    PdfCopy copy = new PdfCopy(document, new FileStream($"{newFullName}.pdf", FileMode.Create));
+                    PdfCopy copy = new PdfCopy(document, new FileStream($"{newfullname}.pdf", FileMode.Create));
                     document.Open();
 
-                    if (pageNumber < pdfreader.NumberOfPages)
+                    if (pagenumber < pdfreader.NumberOfPages)
                     {
-                        copy.AddPage(copy.GetImportedPage(pdfreader, pageNumber+1));
+                        copy.AddPage(copy.GetImportedPage(pdfreader, pagenumber+1));
                     }
                     else
                     {
                         break;
                     }
                     document.Close();
-                    fileList.Add(newFullName);
+                    filelist.Add(newfullname);
                 }
             }
-            return fileList;
+            return filelist;
         }
 
 
@@ -99,14 +114,14 @@ namespace PdfToCsv
                     f.ToExcel($"{xlsFullName}.xls"); //trasformo i nuovi file senza estensione in xls
                     string compactpathxls = $"{xlsFullName}.xls";
                     fileList.Add(compactpathxls);
-                } catch
+                }
+                catch
                 {
                     Console.WriteLine($"Non è stato possibile leggere il file {pdfFileName}.");
                 }
             });
             return fileList;
         }
-
 
         private static string ExtrapolateFileName(string fullxlspath)
         {
@@ -131,7 +146,7 @@ namespace PdfToCsv
             return producerIDname;
         }
 
-        private static string CreateTxtFile(string txtfilename)
+        private static void CreateTxtFile(string txtfilename)
         {
             string txtfilepath = $@"{projectdirpath}\TXT\{txtfilename}.txt";
             string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
@@ -145,16 +160,16 @@ namespace PdfToCsv
                 StreamReader sr1 = new StreamReader(txtfilepath);
                 string producer = sheet.GetRow(6).GetCell(0).ToString();
 
-                if(headerLine != parameters)
+                if (headerLine != parameters)
                 {
                     sw1.WriteLine(parameters);
                 }
-
-                //sw1.WriteLine(data);
-
+                else
+                {
+                    //sw1.WriteLine(data);
+                }
                 sw1.Close();
             }
-            return "";
         }
     }
 }
