@@ -1,5 +1,4 @@
 ﻿//TODO: interpretazione file-->report-->variabile di diverse tipologie
-
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using NPOI.HSSF.UserModel;
@@ -18,56 +17,33 @@ namespace PdfToCsv
         static void Main(string[] args)
         {
             List<FileInfo> pdffiles = GetPdfFilePathList("PDF");
-            List<string> xlsfiles = GetXlsFilePathList();
             foreach (var pdffile in pdffiles)
             {
                 try
                 {
-                    List<string> listPdfSplitted = SplitPdfFileInSinglePage(pdffile);
-                    List<string> xlsList = CreateXlsFile(listPdfSplitted); 
-                    foreach (string xlsFullPathName in xlsList)
-                    {
-                        string txtfilename = ExtrapolateFileName(xlsFullPathName);
-                        if (txtfilename != null)
-                        {
-                            CreateTxtFile(txtfilename); 
-                        }
-                    }
+                    List<string> listpdfsplitted = SplitPdfFileInSinglePage(pdffile);
+                    CreateTxtFilesWithoutHavingXls(listpdfsplitted); //usare se devo creare xlsfile
+                    CreateTxtFilesHavingXls();//usare se ho già creato i miei xls file
                 }
+
                 catch (ArgumentException)
                 {
                     Console.WriteLine($"AE - Errore nella trasformazione del file: {pdffile.Name}.");
+                    //File.Delete(pdffile.FullName);
                 }
                 catch (Exception)
                 {
                     Console.WriteLine($"E - Errore nella trasformazione del file: {pdffile.Name}.");
+                    //File.Delete(pdffile.FullName);
                 }
             }
             Console.ReadLine();
         }
-
+        #region
         private static List<FileInfo> GetPdfFilePathList(string folder)
         {
             DirectoryInfo di = new DirectoryInfo($@"{projectdirpath}\{folder}");
             return di.GetFiles().ToList();
-        }
-
-        private static List<string> GetXlsFilePathList()
-        {
-            List<string> xlsfilelist = new List<string>();
-            List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
-            foreach (var xlsfile in xlsfiles) //lascio il ciclo per visualizzare un eventuale errore a schermo
-            {
-                try
-                {
-                    xlsfilelist.Add($"{xlsfile}");
-                }
-                catch
-                {
-                    Console.WriteLine($"Errore nel restituire il percorso del file xls: {xlsfile.Name}.");
-                }
-            }
-            return xlsfilelist;
         }
 
         private static List<string> SplitPdfFileInSinglePage(FileInfo file)
@@ -87,7 +63,7 @@ namespace PdfToCsv
 
                     if (pagenumber < pdfreader.NumberOfPages)
                     {
-                        copy.AddPage(copy.GetImportedPage(pdfreader, pagenumber+1));
+                        copy.AddPage(copy.GetImportedPage(pdfreader, pagenumber + 1));
                     }
                     else
                     {
@@ -100,6 +76,23 @@ namespace PdfToCsv
             return filelist;
         }
 
+        private static List<string> GetXlsFilePathList()
+        {
+            List<string> xlsfilelist = new List<string>();
+            List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
+            foreach (var xlsfile in xlsfiles) //lascio il ciclo per visualizzare un eventuale errore a schermo 
+            {
+                try
+                {
+                    xlsfilelist.Add($"{xlsfile}");
+                }
+                catch
+                {
+                    Console.WriteLine($"Errore nel restituire il percorso del file xls: {xlsfile.Name}.");
+                }
+            }
+            return xlsfilelist;
+        }
 
         private static List<string> CreateXlsFile(List<string> listPdfFiles)
         {
@@ -107,12 +100,12 @@ namespace PdfToCsv
             listPdfFiles.ForEach(pdfFileName =>
             {
                 SautinSoft.PdfFocus f = new SautinSoft.PdfFocus();
-                string xlsFullName = pdfFileName.Replace(@"\SplittedPDF\", @"\XLS\"); //li copio in xlsdir
+                string xlsfullfame = pdfFileName.Replace(@"\SplittedPDF\", @"\XLS\"); //li copio in xlsdir
                 try
                 {
                     f.OpenPdf($"{pdfFileName}.pdf"); //apro i "vecchi" pdf
-                    f.ToExcel($"{xlsFullName}.xls"); //trasformo i nuovi file senza estensione in xls
-                    string compactpathxls = $"{xlsFullName}.xls";
+                    f.ToExcel($"{xlsfullfame}.xls"); //trasformo i nuovi file senza estensione in xls
+                    string compactpathxls = $"{xlsfullfame}.xls";
                     fileList.Add(compactpathxls);
                 }
                 catch
@@ -121,6 +114,32 @@ namespace PdfToCsv
                 }
             });
             return fileList;
+        }
+
+        private static void CreateTxtFilesHavingXls()
+        {
+            List<string> xlsfilelist = GetXlsFilePathList();
+            foreach (string xlsfile in xlsfilelist)
+            {
+                string txtfilename = ExtrapolateFileName(xlsfile);
+                if (txtfilename != null && txtfilename.Contains('-'))
+                {
+                    CreateTxtFile(txtfilename);
+                }
+            }
+        }
+
+        private static void CreateTxtFilesWithoutHavingXls(List<string> listpdfsplitted)
+        {
+            List<string> xlsfiles = CreateXlsFile(listpdfsplitted);
+            foreach (string xlsfile in xlsfiles)
+            {
+                string txtfilename = ExtrapolateFileName(xlsfile);
+                if (txtfilename != null && txtfilename.Contains('-'))
+                {
+                    CreateTxtFile(txtfilename);
+                }
+            }
         }
 
         private static string ExtrapolateFileName(string fullxlspath)
@@ -137,38 +156,50 @@ namespace PdfToCsv
             {
                 RegexOptions options = RegexOptions.None;
                 Regex regex = new Regex("[ ]{2,}", options);
-
-                int startindex = producerdata.IndexOf(':') > 0 ? producerdata.IndexOf(':') + 2 : 0;
-                int endindex = producerdata.IndexOf('a') > 2 ? producerdata.IndexOf('a') - 2 : 0; //non metto \n altrimenti prende quello dopo "Produttore:" e neanche 'L' perchè può esserci nel nome
+                int startindex = producerdata.IndexOf(':')+2;
+                int endindex = producerdata.IndexOf('a')-2; //non metto \n altrimenti prende quello dopo "Produttore:" e neanche 'L' perchè può esserci nel nome
                 producerIDname = producerdata.Substring(startindex, endindex - startindex);
                 producerIDname = regex.Replace(producerIDname.Replace("\n", " "), " ");
             }
             return producerIDname;
         }
-
+        #endregion
         private static void CreateTxtFile(string txtfilename)
         {
+
             string txtfilepath = $@"{projectdirpath}\TXT\{txtfilename}.txt";
-            string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
-            using (StreamWriter sw1 = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
+            using (StreamWriter writer = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
             {
-                HSSFWorkbook hssfworkbook = new HSSFWorkbook();
-                ISheet sheet = hssfworkbook.GetSheetAt(0);
-
-                string headerLine = File.ReadAllLines(txtfilepath)[0];
-
-                StreamReader sr1 = new StreamReader(txtfilepath);
-                string producer = sheet.GetRow(6).GetCell(0).ToString();
-
-                if (headerLine != parameters)
+                string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
+                List<string> xlsfilepathlist = GetXlsFilePathList();
+                HSSFWorkbook hssfworkbook;
+                foreach (var xlsfilepath in xlsfilepathlist)
                 {
-                    sw1.WriteLine(parameters);
+                    try
+                    {
+                        using (FileStream xlsfile = new FileStream(xlsfilepath, FileMode.Open, FileAccess.Read))
+                        {
+                            hssfworkbook = new HSSFWorkbook(xlsfile);
+                        }
+                        ISheet sheet = hssfworkbook.GetSheetAt(0);
+                        string headerline = File.ReadAllLines(txtfilepath)[0];
+                        StreamReader reader = new StreamReader(txtfilepath);
+                        string producer = sheet.GetRow(6).GetCell(0).ToString();
+                        if (headerline != parameters)
+                        {
+                            writer.WriteLine(parameters);
+                        }
+                        else
+                        {
+                            //writer.WriteLine($@"\n{data});
+                        }
+                        writer.Close();
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"Errore relativo al creare il file di testo ed aggiungere i dati. Nome del file: {xlsfilepath}."); //TODO: attualmente stampa l'intero path, solo il nome
+                    }
                 }
-                else
-                {
-                    //sw1.WriteLine(data);
-                }
-                sw1.Close();
             }
         }
     }
