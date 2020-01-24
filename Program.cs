@@ -23,7 +23,7 @@ namespace PdfToCsv
                 {
                     List<string> listpdfsplitted = SplitPdfFileInSinglePage(pdffile);
                     CreateTxtFilesWithoutHavingXls(listpdfsplitted); //usare se devo creare xlsfile
-                    CreateTxtFilesHavingXls();//usare se ho già creato i miei xls file
+                    CreateTxtFilesHavingXls(); //usare se ho già creato i miei xls file
                 }
 
                 catch (ArgumentException)
@@ -39,7 +39,7 @@ namespace PdfToCsv
             }
             Console.ReadLine();
         }
-        #region
+
         private static List<FileInfo> GetPdfFilePathList(string folder)
         {
             DirectoryInfo di = new DirectoryInfo($@"{projectdirpath}\{folder}");
@@ -163,11 +163,11 @@ namespace PdfToCsv
             }
             return producerIDname;
         }
-        #endregion
+
         private static void CreateTxtFile(string txtfilename)
         {
 
-            string txtfilepath = $@"{projectdirpath}\TXT\{txtfilename}.txt";
+            string txtfilepath = $@"{projectdirpath}TXT\{txtfilename}.txt";
             using (StreamWriter writer = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
             {
                 string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
@@ -182,16 +182,17 @@ namespace PdfToCsv
                             hssfworkbook = new HSSFWorkbook(xlsfile);
                         }
                         ISheet sheet = hssfworkbook.GetSheetAt(0);
-                        string headerline = File.ReadAllLines(txtfilepath)[0];
-                        StreamReader reader = new StreamReader(txtfilepath);
+
+                        //StreamReader reader = new StreamReader(txtfilepath);
                         string producer = sheet.GetRow(6).GetCell(0).ToString();
-                        if (headerline != parameters)
+                        if (IsTextFileEmpty(txtfilepath))
                         {
                             writer.WriteLine(parameters);
+                            Console.WriteLine(GetFileData(sheet));
                         }
                         else
                         {
-                            //writer.WriteLine($@"\n{data});
+                            Console.WriteLine(GetFileData(sheet));
                         }
                         writer.Close();
                     }
@@ -201,6 +202,27 @@ namespace PdfToCsv
                     }
                 }
             }
+        }
+
+        public static bool IsTextFileEmpty(string fileName) //TODO: capire il funzionamento
+        {
+            var info = new FileInfo($"{fileName}");
+            if (info.Length == 0)
+            {
+                return true;
+            }
+            if (info.Length < 6)
+            {
+                var content = File.ReadAllText(fileName);
+                return content.Length == 0;
+            }
+            return false;
+        }
+
+        private static string GetFileData(ISheet sheet)
+        {
+            //TODO: prendere i dati dal file excel, ho passato il foglio come parametro
+            return "";
         }
     }
 }
