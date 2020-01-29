@@ -10,7 +10,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-
+//TODO: eliminare file con formato errato
+//TODO: far in modo che Excel non approssimi i valori
+//TODO: prendere codice ASL, campione e date
 namespace PdfToCsv
 {
     class Program
@@ -197,14 +199,16 @@ namespace PdfToCsv
                         data.ForEach(line => writer.WriteLine(line));
                         writer.Close();
                     }
-                    Console.WriteLine("Text file created.");
                 }
                 catch
                 {
                     string xlsfilename = xlsfilepath.Replace($@"{projectdirpath}XLS\", "");
                     Console.WriteLine($"Create txt file and add data ERROR: {xlsfilename}.");
+                    goto skippositiveoutput;
                 }
             }
+            Console.WriteLine("Text files created.");
+            skippositiveoutput:; //TODO: controllare esattezza salto, da mettere nella funzione chiamante? In questo modo è dento il foreach?
         }
 
         public static bool IsTextFileEmpty(string filename)
@@ -222,7 +226,6 @@ namespace PdfToCsv
 
         private static List<string> GetFileData(ISheet sheet)
         {
-            //TODO: mancano le tre date, il campione ed il codice ASL, inserire anche sui parametri prima del grasso; ordine: ASL, campione, data1, data2, data3
             List<string> datalist = new List<string>();
             Dictionary<string, int> columnDictionary = new Dictionary<string, int>();
 
@@ -256,9 +259,9 @@ namespace PdfToCsv
             }
             for (var rowindex = 8; sheet.GetRow(rowindex) != null; rowindex++)
             {
-                var row = sheet.GetRow(rowindex);
-                //TODO: cercare come prendere valori reali (non approssimati) da file xls
                 //posso lasciare stringa, tanto i valori li prende dal file di testo
+                //il controllo per valori oltre il range non è necessario poichè prendo anche i caratteri di errore: "(#)"
+                var row = sheet.GetRow(rowindex);
                 string fat = GetData(columnDictionary, row, "Grasso");
                 string protein = GetData(columnDictionary, row, "Proteine");
                 string lactose = GetData(columnDictionary, row, "Lattosio");
