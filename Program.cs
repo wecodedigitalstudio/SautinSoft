@@ -79,36 +79,20 @@ namespace PdfToCsv
 
         private static List<string> GetXlsFilePathList()
         {
-            List<string> xlsfilelist = new List<string>();
-            List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
-            foreach (var xlsfile in xlsfiles)
+            List<string> xlsfilesString = new List<string>();
+            List<FileInfo> xlsfilesFileInfo = GetPdfFilePathList("XLS");
+            foreach (var xlsfile in xlsfilesFileInfo) //lascio il foreach per utilizzare una lista di stringhe anzichè di FileInfo
             {
                 try
                 {
-                    xlsfilelist.Add($"{xlsfile}");
+                    xlsfilesString.Add($"{xlsfile}");
                 }
                 catch
                 {
-                    Console.WriteLine($"Return path ERROR: {xlsfile.Name}.");
+                    Console.WriteLine($"Return path list ERROR: {xlsfile.Name}.");
                 }
             }
-            return xlsfilelist;
-            #region precedente
-            //List<string> xlsfilelist = new List<string>();
-            //List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
-            //foreach (var xlsfile in xlsfiles)
-            //{
-            //    try
-            //    {
-            //        xlsfilelist.Add($"{xlsfile}");
-            //    }
-            //    catch
-            //    {
-            //        Console.WriteLine($"Return path ERROR: {xlsfile.Name}.");
-            //    }
-            //}
-            //return xlsfilelist;
-            #endregion
+            return xlsfilesString;
         }
 
         private static List<string> CreateXlsFile(List<string> listPdfFiles)
@@ -177,6 +161,7 @@ namespace PdfToCsv
             string producerIDname = "";
             if (producerdata != "")
             {
+                //TODO: rimuovere i file con formato errato
                 RegexOptions options = RegexOptions.None;
                 Regex regex = new Regex("[ ]{2,}", options);
                 int startindex = producerdata.IndexOf(':') + 2;
@@ -227,26 +212,28 @@ namespace PdfToCsv
             FileInfo fileinfo = new FileInfo($"{filename}");
             if (fileinfo.Length < 6) //il .Length restituisce il peso del file in bytes
             {
-                var filecontent = File.ReadAllText(filename);
-                return filecontent.Length == 0;
+                return true;
             }
-            return false;
+            else
+            {
+                return false;
+            }
         }
 
         private static List<string> GetFileData(ISheet sheet)
         {
-            //TODO: mancano le tre date, il campione ed il codice ASL
+            //TODO: mancano le tre date, il campione ed il codice ASL, inserire anche sui parametri prima del grasso; ordine: ASL, campione, data1, data2, data3
             List<string> datalist = new List<string>();
             Dictionary<string, int> columnDictionary = new Dictionary<string, int>();
 
             var haederRow = sheet.GetRow(6).Cells;
             foreach (var column in haederRow)
             {
-                if (column.StringCellValue.Contains("Grasso p/v"))
+                if (column.StringCellValue.Contains("Grasso p/v") || column.StringCellValue.Contains("Grasso (per calcolo)") || column.StringCellValue.Contains("Grasso\np/v") || column.StringCellValue.Contains("Grasso\n(per calcolo)"))
                 {
                     columnDictionary.Add("Grasso", column.ColumnIndex);
                 }
-                else if (column.StringCellValue.Contains("Proteine p/v"))
+                else if (column.StringCellValue.Contains("Proteine p/v") || column.StringCellValue.Contains("Proteine (per calcolo") || column.StringCellValue.Contains("Grasso\np/v") || column.StringCellValue.Contains("Grasso (per calcolo)"))
                 {
                     columnDictionary.Add("Proteine", column.ColumnIndex);
                 }
@@ -262,7 +249,7 @@ namespace PdfToCsv
                 {
                     columnDictionary.Add("Cellule somatiche", column.ColumnIndex);
                 }
-                else if (column.StringCellValue == "Carica\nBatterica\nTotale")
+                else if (column.StringCellValue == "Carica\nBatterica\nTotale" || column.StringCellValue == "Carica Batterica Totale")
                 {
                     columnDictionary.Add("Carica batterica totale", column.ColumnIndex);
                 }
@@ -270,7 +257,8 @@ namespace PdfToCsv
             for (var rowindex = 8; sheet.GetRow(rowindex) != null; rowindex++)
             {
                 var row = sheet.GetRow(rowindex);
-                //TODO: posso lasciare stringa, tanto i valori li prende dal file di testo
+                //TODO: cercare come prendere valori reali (non approssimati) da file xls
+                //posso lasciare stringa, tanto i valori li prende dal file di testo
                 string fat = GetData(columnDictionary, row, "Grasso");
                 string protein = GetData(columnDictionary, row, "Proteine");
                 string lactose = GetData(columnDictionary, row, "Lattosio");
@@ -287,14 +275,14 @@ namespace PdfToCsv
 
         private static string GetData(Dictionary<string, int> columnDictionary, IRow row, string column)
         {
-            string value = "";
+            string value;
             try
             {
                 value = row.GetCell(columnDictionary[column]).ToString().Replace("\n", " ").Trim();
             }
             catch
             {
-                value = ""; //Valore non presente nella tabella
+                value = "/"; //Valore non presente nella tabella
             }
             return value;
         }
