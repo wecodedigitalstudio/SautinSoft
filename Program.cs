@@ -17,6 +17,7 @@ namespace PdfToCsv
         static void Main(string[] args)
         {
             List<FileInfo> pdffiles = GetPdfFilePathList("PDF");
+            //var xlsfileindex = 0;
             foreach (var pdffile in pdffiles)
             {
                 try
@@ -27,14 +28,17 @@ namespace PdfToCsv
                 }
                 catch (ArgumentException)
                 {
-                    Console.WriteLine($"AE - File: {pdffile.Name}.");
+                    Console.WriteLine($"AE: {pdffile.Name}.");
                     //File.Delete(pdffile.FullName);
+                    //File.Delete(xlspathlist[xlsfileindex]);
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine($"E - File: {pdffile.Name}.");
+                    Console.WriteLine($"E: {pdffile.Name}.");
                     //File.Delete(pdffile.FullName);
+                    //File.Delete(xlspathlist[xlsfileindex]);
                 }
+                //xlsfileindex++;
             }
             Console.ReadLine();
         }
@@ -79,7 +83,7 @@ namespace PdfToCsv
         {
             List<string> xlsfilelist = new List<string>();
             List<FileInfo> xlsfiles = GetPdfFilePathList("XLS");
-            foreach (var xlsfile in xlsfiles) //lascio il ciclo per visualizzare un eventuale errore a schermo 
+            foreach (var xlsfile in xlsfiles) 
             {
                 try
                 {
@@ -87,7 +91,7 @@ namespace PdfToCsv
                 }
                 catch
                 {
-                    Console.WriteLine($"Errore nel restituire il percorso del file xls: {xlsfile.Name}.");
+                    Console.WriteLine($"Return path ERROR: {xlsfile.Name}.");
                 }
             }
             return xlsfilelist;
@@ -109,7 +113,7 @@ namespace PdfToCsv
                 }
                 catch
                 {
-                    Console.WriteLine($"Non è stato possibile leggere il file {pdfFileName}.");
+                    Console.WriteLine($"Read file ERROR: {pdfFileName}.");
                 }
             });
             return fileList;
@@ -170,7 +174,7 @@ namespace PdfToCsv
             string txtfilepath = $@"{projectdirpath}TXT\{txtfilename}.txt";
             using (StreamWriter writer = new StreamWriter(txtfilepath, true)) //true per non eliminare e ricreare
             {
-                string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)\n";
+                string parameters = "Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Caseine (%); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL)\n";
                 List<string> xlsfilepathlist = GetXlsFilePathList();
                 HSSFWorkbook hssfworkbook;
                 foreach (var xlsfilepath in xlsfilepathlist)
@@ -187,13 +191,19 @@ namespace PdfToCsv
                         {
                             writer.WriteLine(parameters);
                         }
-                        Console.WriteLine(GetFileData(sheet));
+                        var data = GetFileData(sheet);
+                        foreach(var line in data)
+                        {
+                            writer.WriteLine(line);
+                        }
+                        //data.ForEach(line => writer.WriteLine(line));
                         writer.Close();
+                        Console.WriteLine("Creati i file di testo.");
                     }
                     catch
                     {
                         string xlsfilename = xlsfilepath.Replace($@"{projectdirpath}XLS\", "");
-                        Console.WriteLine($"Errore relativo al creare il file di testo ed aggiungere i dati. Nome del file: {xlsfilename}."); 
+                        Console.WriteLine($"Create txt file and add data ERROR: {xlsfilename}."); 
                     }
                 }
             }
@@ -212,47 +222,63 @@ namespace PdfToCsv
 
         private static List<string> GetFileData(ISheet sheet)
         {
-            //List<string> datalist = new List<string>();
+            List<string> datalist = new List<string>();
             Dictionary<string, int> columnDictionary = new Dictionary<string, int>();
-            List<Dictionary<string, string>> data = new List<Dictionary<string, string>>();
 
-            var haederRow = sheet.GetRow(6);
+            var haederRow = sheet.GetRow(6).Cells;
             foreach (var column in haederRow)
             {
-                Console.WriteLine(column.StringCellValue);
-                columnDictionary.Add(column.StringCellValue, column.ColumnIndex);
-
+                if (column.StringCellValue.Contains("Grasso p/v"))
+                {
+                    columnDictionary.Add("Grasso", column.ColumnIndex);
+                }
+                else if (column.StringCellValue.Contains("Proteine p/v"))
+                {
+                    columnDictionary.Add("Proteine", column.ColumnIndex);
+                }
+                else if (column.StringCellValue.Contains("Lattosio"))
+                {
+                    columnDictionary.Add("Lattosio", column.ColumnIndex);
+                }
+                else if (column.StringCellValue.Contains("Caseine"))
+                {
+                    columnDictionary.Add("Caseine", column.ColumnIndex);
+                }
+                else if (column.StringCellValue.Contains("Cellule\nsomatiche"))
+                {
+                    columnDictionary.Add("Cellule somatiche", column.ColumnIndex);
+                }
+                else if (column.StringCellValue.Contains("Carica\nBatterica\nTotale"))
+                {
+                    columnDictionary.Add("Carica batterica totale", column.ColumnIndex);
+                }
             }
-
-            
-            //TODO:Trovare un modo per ciclare le righe
-
-            //TODO:Ad ogni ciclo riga all'interno c'è un ciclo sulle colonne oppure grazie al dictionary:
-
-            string cellcontent1 = sheet.GetRow(0).GetCell(columnDictionary["Grassi"]).ToString().Replace("\n", " ").Trim();
-            string cellcontent2 = sheet.GetRow(0).GetCell(columnDictionary["pH"]).ToString().Replace("\n", " ").Trim();
-
-            //TODO
-
-            ////dictionary.Add(cell content, column number);
-            //dictionary.Add("Grasso", 6);
-            //dictionary.Add("Grasso (per calcolo)", 7);
-            //dictionary.Add("Proteine", 8);
-            //dictionary.Add("Proteine (per calcolo)", 9);
-            //dictionary.Add("Lattosio", 10);
-            //dictionary.Add("Residuo secco magro", 11);
-            //dictionary.Add("pH", 12);
-            //dictionary.Add("Indice Crioscopico", 13);
-            //dictionary.Add("Contenuto in acqua aggiunta", 14);
-            //dictionary.Add("Cellule somatiche", 15);
-            //dictionary.Add("Carica batterica totale", 16);
-            //if ("Grasso (per calcolo)" == sheet.GetRow(6).GetCell(6).ToString())
-
-            //    for (int columnindex = 0; columnindex < 18; columnindex++)
-            //    {
-            //        string cellcontent = sheet.GetRow(6).GetCell(columnindex).ToString().Replace("\n", " ").Trim();
-            //    }
+            for (var rowindex = 8; sheet.GetRow(rowindex) != null; rowindex++)
+            {
+                var row = sheet.GetRow(rowindex);
+                string fat = GetData(columnDictionary, row, "Grasso");
+                string protein = GetData(columnDictionary, row, "Proteine");
+                string lactose = GetData(columnDictionary, row, "Lattosio");
+                string casein = GetData(columnDictionary, row, "Caseine"); 
+                string somaticcells = GetData(columnDictionary, row, "Cellule somatiche");
+                string totalbacterialload = GetData(columnDictionary, row, "Carica batterica totale");
+                datalist.Add($"{fat},{protein},{lactose},{casein},{somaticcells},{totalbacterialload}"); //formato csv separato da virgole
+            }
             return datalist;
+        }
+
+        private static string GetData(Dictionary<string, int> columnDictionary, IRow row, string column)
+        {
+            string value = "";
+            try
+            {
+                value = row.GetCell(columnDictionary[column]).ToString().Replace("\n", " ").Trim();
+            }
+            catch
+            {
+                value = ""; //Valore non presente nella tabella
+            }
+            return value;
         }
     }
 }
