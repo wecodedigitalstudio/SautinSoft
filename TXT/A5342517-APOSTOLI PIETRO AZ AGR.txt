@@ -1,2 +1,4 @@
 Grasso (%p/V); Proteine (%p/V); Lattosio (%p/p); Cellule somatiche (cell*1000/mL); Carica batterica totale (UFC*1000/mL); Caseine (%)
 
+,,5,,16,
+,,4,80,,18,83
